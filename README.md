@@ -10,8 +10,12 @@ git clone https://github.com/kingluminance/claude-skills.git ~/.claude/skills
 
 ## Two kinds of entries here
 
-- **Hand-written / manually vendored skills** (e.g. `parallel-feature`, `archify`, `ponytail`, `find-skills`)
+- **Hand-written / manually vendored skills** (e.g. `parallel-feature`, `archify`, `ponytail`, `find-skills`,
+  `hwpxskill`, `claw-hwp`)
   — plain folders, fully tracked by this repo. `git pull` is enough to sync them.
+  `hwpxskill` needs a local `.venv` with `lxml` (not tracked, recreate per machine:
+  `python3 -m venv hwpxskill/.venv && hwpxskill/.venv/bin/pip install lxml`).
+  `claw-hwp` vendors its Node deps under `scripts/vendor/`, so it needs only Node 18+.
 - **Skills installed via `npx skills add ... -g`** (e.g. `cli-anything-gimp`)
   — the CLI stores the real files under `~/.agents/skills/<name>` and only
   symlinks `~/.claude/skills/<name>` to it. On a machine where git has real
