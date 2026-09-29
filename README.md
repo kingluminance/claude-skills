@@ -30,3 +30,16 @@ git clone https://github.com/kingluminance/claude-skills.git ~/.claude/skills
   automatically is the underlying tool the skill wraps — e.g.
   `cli-anything-gimp` needs `pip install cli-anything-gimp` run separately
   on each machine before the skill's commands actually work.
+
+## Obsidian vault skills
+
+Skills for the Obsidian vault at `~/Desktop/brain` (PARA + light Zettelkasten).
+Source of truth is the vault's `_skills/` folder; `_scripts/push-skills.sh` copies them here.
+
+| Skill | Say | Does |
+|---|---|---|
+| `vault-health` | "볼트 점검해줘" | Broken links, orphans, hub-spoke gaps, graph color groups (`scripts/vault-health.py`, also in vault `_scripts/`) |
+| `inbox-sort` | "inbox 정리해줘" | Propose PARA destinations for `inbox.md` items, move approved ones |
+| `concept-extract` | "○○에서 개념 뽑아줘" | Extract up to 3 concept notes into `resources/concepts/` |
+| `daily-log` | "오늘 정리해줘" | 3-line daily log from today's modified notes |
+| `weekly-review` | "주간 리뷰" | Weekly summary to `daily/YYYY-Www.md`, suggest archiving stalled projects |
