@@ -44,6 +44,28 @@ Source of truth is the vault's `_skills/` folder; `_scripts/push-skills.sh` copi
 | `daily-log` | "오늘 정리해줘" | 3-line daily log from today's modified notes |
 | `weekly-review` | "주간 리뷰" | Weekly summary to `daily/YYYY-Www.md`, suggest archiving stalled projects |
 
+## Music composition skills
+
+Claude writes the project/MIDI files directly (no GUI automation); you open them in the app to listen and edit.
+Both share the same note format (`note(key, pos, length, vol)`, 48 ticks per quarter), so composition code moves between them.
+
+| Skill | Say | Does |
+|---|---|---|
+| `lmms-compose` | "작곡해줘", "비트 만들어줘", "BGM" | Writes LMMS `.mmp` projects (sf2player + GM soundfont), reads back your LMMS edits, renders WAV via LMMS CLI (`scripts/mmp.py`) |
+| `midi-compose` | "악보로 줘", "MIDI로 만들어줘" | Writes `.mid`, renders WAV with FluidSynth, exports PDF/PNG/MusicXML via MuseScore, reads back `.mscz` edits (`scripts/midi.py`) |
+
+Per-machine setup (paths overridable with `LMMS_EXE`, `FLUIDSYNTH_EXE`, `MUSESCORE_EXE`, `SF2_PATH`):
+
+```bash
+pip install pretty_midi mido
+winget install LMMS.LMMS             # lmms-compose
+winget install Musescore.Musescore   # midi-compose (sheet music)
+# FluidSynth (midi-compose): not on winget; unzip the win10-x64 release from
+#   https://github.com/FluidSynth/fluidsynth/releases into ~/tools/fluidsynth/
+# Soundfont (both): GeneralUser GS into ~/tools/soundfonts/
+curl -L -o ~/tools/soundfonts/GeneralUser-GS.sf2 --create-dirs https://raw.githubusercontent.com/mrbumpy409/GeneralUser-GS/main/GeneralUser-GS.sf2
+```
+
 ## Tools that need a per-machine install
 
 - `impeccable` (pbakaus/impeccable) - skill files are tracked here; installed via
