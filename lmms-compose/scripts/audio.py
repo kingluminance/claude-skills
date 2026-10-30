@@ -24,6 +24,9 @@ def _read(path):
     return ch, w.getframerate(), array.array("h", raw)
 
 
+read_pcm = _read   # 공개 이름: (채널 수, 샘플레이트, int16 배열)
+
+
 def _write(path, ch, sr, a):
     w = wave.open(path, "wb")
     w.setnchannels(ch)
