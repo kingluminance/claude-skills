@@ -51,13 +51,13 @@ Both share the same note format (`note(key, pos, length, vol)`, 48 ticks per qua
 
 | Skill | Say | Does |
 |---|---|---|
-| `lmms-compose` | "작곡해줘", "비트 만들어줘", "BGM" | Writes LMMS `.mmp` projects (sf2player + GM soundfont), reads back your LMMS edits, renders WAV via LMMS CLI (`scripts/mmp.py`) |
+| `lmms-compose` | "작곡해줘", "비트 만들어줘", "게임 BGM" | Writes LMMS `.mmp` projects: built-in synths (TripleOscillator, LB302, Kicker), sampler + break slicing, GM soundfont, effects (distortion, bitcrush, filter, reverb, delay), mixer buses, parameter/tempo automation; renders WAV/stems; seamless game loops + OGG LOOPSTART tags (`scripts/mmp.py`, `scripts/audio.py`) |
 | `midi-compose` | "악보로 줘", "MIDI로 만들어줘" | Writes `.mid`, renders WAV with FluidSynth, exports PDF/PNG/MusicXML via MuseScore, reads back `.mscz` edits (`scripts/midi.py`) |
 
 Per-machine setup (paths overridable with `LMMS_EXE`, `FLUIDSYNTH_EXE`, `MUSESCORE_EXE`, `SF2_PATH`):
 
 ```bash
-pip install pretty_midi mido
+pip install pretty_midi mido soundfile mutagen numpy   # last three: lmms-compose to_pcm16 / ogg_loop
 winget install LMMS.LMMS             # lmms-compose
 winget install Musescore.Musescore   # midi-compose (sheet music)
 # FluidSynth (midi-compose): not on winget; unzip the win10-x64 release from
