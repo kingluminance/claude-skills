@@ -96,7 +96,9 @@ read_project("song.mmp"); write_midi("song.mid", proj); open_in_lmms("song.mmp")
 to_pcm16("break.ogg", "samples/break.wav")      # 받은 샘플을 16bit WAV로 (soundfile 필요)
 cuts = onsets("samples/break.wav")              # 타격 지점 자동 감지(0~1 비율). sensitivity로 조절
 cuts = even_slices(16)                           # 원본이 박에 딱 맞으면 16등분이 더 정확
+hits = pick_hits(classify_slices("samples/break.wav", cuts))  # {'kick': 1, 'hat': 3, 'snare': 0, 'ghost': 4} 조각 번호 (numpy)
 kit = break_kit("samples/break.wav", cuts, names=["kick", "hat", "snare", ...], reverse_too=True)
+# reverse_too=True면 kit[i*2]가 i번 조각, kit[i*2+1]이 그 리버스
 tracks += [dict(**k, notes=chops.get(k["name"], []), fxch=1) for k in kit]   # 슬라이스 = 트랙 하나
 ```
 **브레이크 촙 요령**: 원본 BPM과 곡 BPM이 다르면 슬라이스를 원래 피치(ORIG)로 쓰고 위치만 새 그리드에 놓는다(타임스트레치 불필요). 피치를 내리면 길어지고 어두워진다(ORIG-5, ORIG-12). 리버스 슬라이스는 다음 박 직전에 끝나게 배치한다.

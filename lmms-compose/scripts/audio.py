@@ -18,8 +18,10 @@ def _read(path):
     w = wave.open(path)
     if w.getsampwidth() != 2:
         raise ValueError("16bit PCM WAV만 지원: " + path)
-    a = array.array("h", w.readframes(w.getnframes()))
-    return w.getnchannels(), w.getframerate(), a
+    raw = w.readframes(w.getnframes())
+    ch = w.getnchannels()
+    raw = raw[:len(raw) - len(raw) % (2 * ch)]   # 마지막 프레임이 잘린 파일 대비
+    return ch, w.getframerate(), array.array("h", raw)
 
 
 def _write(path, ch, sr, a):
@@ -67,6 +69,48 @@ def onsets(path, sensitivity=1.6, min_gap=0.06, hop=256):
                 found.append((i + 1) * hop / frames)
                 last = t
     return found
+
+
+def classify_slices(path, cuts, window=0.08):
+    """각 슬라이스 앞부분(window초)의 스펙트럼으로 성격을 추정한다 (numpy 필요).
+    반환: [dict(i, kind='kick'|'snare'|'hat', low, high, level), ...]
+    kind는 대략적인 추정이다. 킥 찾기는 low 비율 순위로, 햇은 high 비율 순위로 고르는 편이 더 안정적이다."""
+    import numpy as np
+    ch, sr, a = _read(path)
+    x = np.frombuffer(a.tobytes(), dtype=np.int16).reshape(-1, ch).mean(1) / 32768
+    n = len(x)
+    out = []
+    for i, c in enumerate(cuts):
+        s = x[int(c * n):int(c * n) + int(window * sr)]
+        if len(s) < 64:
+            out.append(dict(i=i, kind="?", low=0.0, high=0.0, level=0.0))
+            continue
+        spec = np.abs(np.fft.rfft(s * np.hanning(len(s))))
+        fr = np.fft.rfftfreq(len(s), 1 / sr)
+        tot = spec.sum() + 1e-9
+        low, high = spec[fr < 150].sum() / tot, spec[fr > 5000].sum() / tot
+        kind = "kick" if low > 0.25 else ("hat" if high > 0.35 else "snare")
+        out.append(dict(i=i, kind=kind, low=round(float(low), 3), high=round(float(high), 3),
+                        level=round(float(np.sqrt(np.mean(s ** 2))), 4)))
+    return out
+
+
+def pick_hits(classes):
+    """classify_slices 결과에서 대표 조각 번호를 고른다: kick(저음 비율 최대), snare(중역 슬라이스 중 가장 큼),
+    hat(고음 비율 최대), ghost(스네어 성격 중 가장 작은 것). 촙 패턴의 출발점으로 쓴다."""
+    used = set()
+
+    def take(pool, key, fn=max):
+        pool = [c for c in pool if c["i"] not in used] or [c for c in classes if c["i"] not in used] or classes
+        i = fn(pool, key=key)["i"]
+        used.add(i)
+        return i
+    kick = take(classes, lambda c: c["low"])
+    hat = take(classes, lambda c: c["high"])
+    snares = [c for c in classes if c["kind"] == "snare"]
+    snare = take(snares, lambda c: c["level"])
+    ghost = take(snares, lambda c: c["level"], min)
+    return dict(kick=kick, hat=hat, snare=snare, ghost=ghost)   # 서로 다른 조각
 
 
 def even_slices(n):
