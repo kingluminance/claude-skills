@@ -345,7 +345,7 @@ def _auto_tracks(xml):
         start = a.points[0][0]
         end = max(a.points[-1][0], start + 1)
         times = "".join(f'<time pos="{p - start}" value="{_fmt(v)}"/>' for p, v in a.points)
-        length = max(BAR, -(-(end - start) // BAR) * BAR)
+        length = max(BAR, -(-(end - start + 1) // BAR) * BAR)   # 마지막 점이 마디 경계에 있어도 패턴 안에 들게
         out.append(f'<track muted="0" type="5" name={quoteattr("Auto: " + a.name)} solo="0"><automationtrack/>'
                    f'<automationpattern name={quoteattr(a.name)} pos="{start}" len="{length}" tens="1" mute="0" '
                    f'prog="{Auto.INTERP[a.interp]}">{times}<object id="{a.id}"/></automationpattern></track>')
