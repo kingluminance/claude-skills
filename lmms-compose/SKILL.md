@@ -43,7 +43,7 @@ write_project("song.mmp", tracks, bpm=195, mastervol=100,
               mixer=[dict(name="Drums", fx=[...]), dict(name="Synths", fx=[...])],  # 채널 1, 2 → 트랙 fxch=1/2
               master_fx=[amp(80)], loop=(start_tick, end_tick))
 ```
-**트랙 dict 키**: `name, notes, inst, fx=[...], env=adsr(...), filt=filt(...), vol(0~200), pan(-100~100), fxch, pitch(센트), split(틱: 이 간격으로 패턴을 나눠 LMMS에서 보기 좋게, 예: BAR*8), muted`. `inst`가 없으면 `patch`/`bank`로 sf2.
+**트랙 dict 키**: `name, notes, inst, fx=[...], env=adsr(...), filt=filt(...), vol(0~200), pan(-100~100), fxch, pitch(센트, Auto 가능: 범위 자동 확장), split(틱: 이 간격으로 패턴을 나눠 LMMS에서 보기 좋게, 예: BAR*8), muted`. `inst`가 없으면 `patch`/`bank`로 sf2.
 
 ### 악기
 | 함수 | 용도 |
@@ -63,7 +63,7 @@ write_project("song.mmp", tracks, bpm=195, mastervol=100,
 |---|---|
 | `distort(drive=1~20, outgain)` | tanh 웨이브셰이퍼. 베이스/스탭을 두껍고 더럽게 |
 | `bitcrush(rate=Hz, bits=1~8)` | 샘플레이트·비트 깎기. 글리치/로파이 |
-| `dualfilter(cut, res, type, cut2=..., mix)` | 필터 이펙트. 스윕은 cut에 Auto |
+| `dualfilter(cut, res, type, cut2=..., mix)` | 필터 이펙트. 스윕은 cut에 Auto. mix -1=1번만(기본), 0=반반(소리 절반), 1=2번만 |
 | `reverb(size, color, wet)` / `delay(time초, feedback, wet)` | 공간감. 195BPM 8분 딜레이 = `ticks_to_sec(E, 195)` |
 | `amp(volume%, pan)` / `bassboost(freq, gain)` / `stereo(width)` | 레벨·저음·스테레오 폭 |
 | `raw_fx(name, ctrl_tag, attrs)` | flanger, multitapecho, eq 등. 속성은 LMMS `data/projects` 데모에서 확인 |
@@ -139,6 +139,7 @@ tracks += [dict(**k, notes=chops.get(k["name"], []), fxch=1) for k in kit]   # �
 - **음역 분리**: 베이스 E1~G2(28~43), 코드/패드 C3~C5(48~72), 멜로디 C4~C6(60~84). 서브 대역(~100Hz)은 베이스나 킥 중 **한 번에 하나만** 차지하게 한다.
 - **반복과 변주**: 모티프를 2~4마디마다 리듬이나 끝음만 바꿔 반복. 섹션이 바뀌면 악기를 더하거나 빼고 음역을 올린다.
 - **대비**: 큰 타격 직전에 1/16~1/8박 무음을 두면 훨씬 세게 들린다. 클라이맥스 전에는 필터 스윕이나 스터터로 빌드업한다.
+- **믹서 채널 volume은 최대 2.0** (넘으면 오류). 채널 페이더는 이펙트 뒤에 걸려 선형이라 그룹 밸런스 조절에 적합하다. 디스토션 앞의 트랙 vol은 줄여도 출력이 덜 줄어든다.
 - **믹스 버스**: 드럼, 베이스, 신스를 믹서 채널로 묶어 버스마다 이펙트를 건다. 마스터에는 `amp()` 정도만 둔다.
 
 ## 주의 / 알려진 문제

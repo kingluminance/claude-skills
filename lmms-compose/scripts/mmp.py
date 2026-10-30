@@ -219,9 +219,12 @@ def distort(drive=4.0, ingain=1.0, outgain=0.8, wet=1.0):
         inputGain=ingain, outputGain=outgain, clipInput=1, waveShape=_curve(drive)), wet)
 
 
-def dualfilter(cut=2000, res=0.5, type="lowpass", gain=100, cut2=None, res2=0.5, type2="lowpass", mix=0.0,
+def dualfilter(cut=2000, res=0.5, type="lowpass", gain=100, cut2=None, res2=0.5, type2="lowpass", mix=None,
                wet=1.0):
-    """필터 이펙트 (스윕은 cut에 Auto). 두 번째 필터는 cut2를 줄 때만 켜진다. mix -1(1번)~1(2번)."""
+    """필터 이펙트 (스윕은 cut에 Auto). 두 번째 필터는 cut2를 줄 때만 켜진다.
+    mix: -1 = 1번만, 0 = 반반, 1 = 2번만. 기본은 cut2가 없으면 -1 (0이면 소리가 절반이 된다)."""
+    if mix is None:
+        mix = 0.0 if cut2 else -1.0
     return _fx("dualfilter", "DualFilterControls", dict(
         enabled1=1, filter1=FILTERS[type], cut1=cut, res1=res, gain1=gain,
         enabled2=1 if cut2 else 0, filter2=FILTERS[type2], cut2=cut2 or 7000, res2=res2, gain2=100,
@@ -323,10 +326,13 @@ def _patterns(name, notes, split):
 
 
 def _track(name, notes=(), inst=None, patch=0, bank=0, reverb=True, vol=100, pan=0, fx=None, env=None,
-           filt=None, fxch=0, pitch=0, split=None, muted=False):
+           filt=None, fxch=0, pitch=0, pitchrange=None, split=None, muted=False):
     inst = inst or sf2(patch, bank, reverb)
+    if pitchrange is None:   # pitch(센트)에 Auto를 쓰면 범위를 자동으로 넓힌다
+        vals = [v for _, v in pitch.points] if isinstance(pitch, Auto) else [pitch]
+        pitchrange = max(1, min(60, -(-max(abs(v) for v in vals) // 100)))
     it = _el("instrumenttrack", dict(vol=vol, pan=pan, fxch=fxch, pitch=pitch, basenote=57, usemasterpitch=1,
-                                     pitchrange=1),
+                                     pitchrange=pitchrange),
              inst + _eldata(env, filt) + _fxchain(fx))
     return (f'<track muted="{int(muted)}" type="0" name={quoteattr(name)} solo="0">{it}'
             f'{_patterns(name, list(notes), split)}</track>')
@@ -349,7 +355,10 @@ def _auto_tracks(xml):
 def _mixer(channels, master_fx):
     chans = [f'<fxchannel num="0" name="Master" volume="1" muted="0" soloed="0">{_fxchain(master_fx)}</fxchannel>']
     for i, c in enumerate(channels or [], 1):
-        a, kids = _a(dict(num=i, name=c["name"], volume=c.get("volume", 1.0), muted=0, soloed=0))
+        vol = c.get("volume", 1.0)
+        if not isinstance(vol, Auto) and vol > 2.0:   # LMMS 채널 페이더 최대 2.0 (넘는 값은 무시됨)
+            raise ValueError(f"믹서 채널 '{c['name']}' volume {vol} > 2.0: 다른 채널을 낮추고 마스터로 보상할 것")
+        a, kids = _a(dict(num=i, name=c["name"], volume=vol, muted=0, soloed=0))
         # send가 없으면 채널 소리가 마스터로 가지 않아 무음이 된다. to=다른 채널 번호로 버스 구성 가능
         send = f'<send channel="{c.get("to", 0)}" amount="1"/>'
         chans.append(f"<fxchannel {a}>{kids}{_fxchain(c.get('fx'))}{send}</fxchannel>")
